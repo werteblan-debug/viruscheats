@@ -1,0 +1,31 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Build APK
+      run: |
+        mkdir -p app/src/main/java/com/viruscheat
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        echo 'package com.viruscheat; public class MainActivity {}' > app/src/main/java/com/viruscheat/MainActivity.java
+        echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.viruscheat"><application android:theme="@style/Theme.AppCompat"><activity android:name=".MainActivity"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+        echo 'apply plugin: "com.android.application"\nandroid { compileSdk 33 }' > app/build.gradle
+        echo '<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center"><EditText android:id="@+id/keyInput" android:layout_width="300dp" android:layout_height="50dp"/><Button android:id="@+id/initBtn" android:layout_width="200dp" android:layout_height="50dp" android:text="Init"/></LinearLayout>' > app/src/main/res/layout/activity_main.xml
+        echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.AppCompat" parent="@android:style/Theme.DeviceDefault.Light"/></resources>' > app/src/main/res/values/themes.xml
+        echo 'include ":app"' > settings.gradle
+        echo 'buildscript { repositories { google(); mavenCentral() } dependencies { classpath "com.android.tools.build:gradle:7.4.2" } }' > build.gradle
+        chmod +x gradlew 2>/dev/null || true
+        ./gradlew assembleDebug || true
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: VirusCheat
+        path: app/build/outputs/apk/debug/*.apk
